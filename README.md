@@ -71,7 +71,7 @@ This enterprise-grade template demonstrates industry best practices for deployin
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/flask-ml-deployment.git
+git clone https://github.com/Harrypatria/Flask-Tutorial.git
 cd flask-ml-deployment
 
 # Create virtual environment
