@@ -1,0 +1,36 @@
+ <!DOCTYPE html> 
+<html >
+ <!--From https://codepen.io/frytyler/pen/EGdtg--> 
+<head> 
+<meta charset="UTF-8"> 
+<title>ML API</title> 
+<link href='https://fonts.googleapis.com/css?family=Pacifico' rel='stylesheet' typ
+ e='text/css'>
+ <link href='https://fonts.googleapis.com/css?family=Arimo' rel='stylesheet' type='text/
+ css'>
+ <link href='https://fonts.googleapis.com/css?family=Hind:300' rel='stylesheet' type='te
+ xt/css'>
+ <link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='style
+ sheet' type='text/css'>
+ <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> 
+</head> 
+<body> 
+<div class="login"> 
+<h1>Predict Profit</h1> 
+<!-- Main Input For Receiving Query to our ML --> 
+<form action="{{ url_for('predict')}}"method="post"> 
+<input type="text" name="R&D Spend" placeholder="R&D Spend" required="required" 
+/> <!--Taking Input of Marketing --> 
+<input type="text" name="Administration" placeholder="Administration" required=
+ "required" /><!--Input of Administration --> 
+<input type="text" name="Marketing" placeholder="Marketing" required="required" 
+/> <!-- Input for Marketing --> 
+<button type="submit" class="btn btn-primary btn-block btn-large">Predict</butt
+ on> 
+</form> 
+<br> 
+<br> 
+{{ prediction_text }}  <!-- Predicted Value --> 
+</div> 
+</body>
+ </html>
