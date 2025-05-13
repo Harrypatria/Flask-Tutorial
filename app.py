@@ -1,6 +1,6 @@
 """
 Flask API for ML Model Deployment
-Author: Your Name
+Author: Harry Patria
 Version: 1.1.0
 """
 
