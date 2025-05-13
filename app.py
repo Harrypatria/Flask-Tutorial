@@ -5,7 +5,7 @@ to be made),
 # jsonify - jsonify our predictions and send the response back
  import pickle 
 app = Flask(__name__) #create an instance of flask.
- model = pickle.load(open('model1.pkl', 'rb')) #Load our model pickle file 
+ model = pickle.load(open('model.pkl', 'rb')) #Load our model pickle file 
 @app.route('/')
  def home(): 
 return render_template('index.html') 
