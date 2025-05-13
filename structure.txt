@@ -1,0 +1,15 @@
+flask-ml-deployment/
+├── model/                   # Machine Learning artifacts
+│   ├── model.py            # Model training script
+│   └── model.pkl           # Serialized model
+├── app/                    # Flask application
+│   ├── __init__.py
+│   ├── routes.py           # API endpoints
+│   └── validators.py       # Input validation
+├── templates/              # Frontend components
+│   ├── base.html           # Master template
+│   └── predict.html       # Prediction interface
+├── tests/                  # Test suite
+├── config.py               # Configuration settings
+├── app.py                  # Application entry point
+└── requirements.txt        # Dependency list
