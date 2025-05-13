@@ -1,41 +1,127 @@
- import numpy as np
- from flask import Flask, request, jsonify, render_template
- # Flask - To import flask,request - Getting the request data (for which predictions are 
-to be made), 
-# jsonify - jsonify our predictions and send the response back
- import pickle 
-app = Flask(__name__) #create an instance of flask.
- model = pickle.load(open('model.pkl', 'rb')) #Load our model pickle file 
-@app.route('/')
- def home(): 
-return render_template('index.html') 
-# @app.route('/') is used to tell flask what url should trigger the function index() 
-# and in the function index we use render_template('index.html') to display the script
- index.html in the browser.
- @app.route('/predict',methods=['POST'])
- """ Let's write a function predict() which will do: 
-1) Load the persisted model into memory when the application starts,
- 2) Create an API endpoint that takes input variables, transforms them into the appropri
- ate format, and returns predictions.""" 
-def predict(): 
-'''
-   For rendering results on HTML GUI
-   ''' 
-int_features = [int(x) for x in request.form.values()] #Take Input as integer value
- s 
-final_features = [np.array(int_features)] #convert it into array 
-prediction = model.predict(final_features) #PRedict 
-output = round(prediction[0], 2) 
-return render_template('index.html', prediction_text='Profit should be $ {}'.format
- (output))  
-@app.route('/predict_api',methods=['POST'])
- def predict_api(): 
-'''
-   For direct API calls trought request
-   ''' 
-data = request.get_json(force=True) 
-prediction = model.predict([np.array(list(data.values()))]) 
-output = prediction[0] 
-return jsonify(output) 
-if __name__ == "__main__": 
-app.run(debug=True)
+"""
+Flask API for ML Model Deployment
+Author: Your Name
+Version: 1.1.0
+"""
+
+from datetime import datetime
+import numpy as np
+from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
+import joblib
+from config import MODEL_CONFIG
+
+app = Flask(__name__)
+CORS(app)  # Enable CORS for cross-origin requests
+
+# Load trained model and metadata
+model = joblib.load(MODEL_CONFIG['MODEL_PATH'])
+feature_columns = MODEL_CONFIG['FEATURE_COLUMNS']
+state_mapping = MODEL_CONFIG['STATE_ENCODING']
+
+def validate_input(data: dict) -> tuple:
+    """
+    Validate and sanitize input data
+    Returns: (cleaned_data, error_message)
+    """
+    required_fields = ['R&D', 'Administration', 'Marketing', 'State']
+    
+    # Check missing fields
+    if any(field not in data for field in required_fields):
+        return None, f"Missing required fields: {required_fields}"
+    
+    try:
+        cleaned = {
+            'R&D': float(data['R&D']),
+            'Administration': float(data['Administration']),
+            'Marketing': float(data['Marketing']),
+            'State': data['State'].title()
+        }
+    except ValueError:
+        return None, "Numerical fields must contain valid numbers"
+    
+    # Validate state
+    if cleaned['State'] not in state_mapping:
+        valid_states = list(state_mapping.keys())
+        return None, f"Invalid state. Valid options: {valid_states}"
+    
+    return cleaned, None
+
+def prepare_features(input_data: dict) -> np.ndarray:
+    """
+    Convert input data to model-ready format
+    """
+    # Create base array with numerical features
+    numerical = np.array([
+        input_data['R&D'],
+        input_data['Administration'],
+        input_data['Marketing']
+    ])
+    
+    # Add one-hot encoded state features
+    state_vector = np.zeros(len(state_mapping))
+    state_index = state_mapping[input_data['State']]
+    state_vector[state_index] = 1
+    
+    return np.concatenate([numerical, state_vector]).reshape(1, -1)
+
+@app.route('/', methods=['GET'])
+def dashboard():
+    """Render prediction dashboard"""
+    return render_template('index.html', states=list(state_mapping.keys()))
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    """
+    Handle prediction requests from both form and API
+    Accepts: application/x-www-form-urlencoded or application/json
+    """
+    # Get input data based on content type
+    if request.content_type == 'application/json':
+        input_data = request.get_json()
+    else:
+        input_data = request.form.to_dict()
+    
+    # Validate input
+    cleaned_data, error = validate_input(input_data)
+    if error:
+        return jsonify({
+            'status': 'error',
+            'message': error,
+            'timestamp': datetime.utcnow().isoformat()
+        }), 400
+    
+    try:
+        # Prepare features and predict
+        features = prepare_features(cleaned_data)
+        prediction = model.predict(features)
+        result = round(float(prediction[0]), 2)
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Prediction failed: {str(e)}',
+            'timestamp': datetime.utcnow().isoformat()
+        }), 500
+
+    # Format response
+    response = {
+        'status': 'success',
+        'prediction': result,
+        'currency': 'USD',
+        'timestamp': datetime.utcnow().isoformat(),
+        'model_version': MODEL_CONFIG['VERSION']
+    }
+    
+    # Return appropriate response format
+    if request.content_type == 'application/json':
+        return jsonify(response)
+    return render_template(
+        'index.html',
+        prediction_text=f'Predicted Profit: ${result}',
+        states=list(state_mapping.keys())
+    )
+
+if __name__ == '__main__':
+    app.run(host=MODEL_CONFIG['HOST'], 
+            port=MODEL_CONFIG['PORT'], 
+            debug=MODEL_CONFIG['DEBUG'])
