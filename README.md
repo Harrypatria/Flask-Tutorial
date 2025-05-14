@@ -73,7 +73,6 @@ This enterprise-grade template demonstrates industry best practices for deployin
 # Clone repository
 git clone https://github.com/Harrypatria/Flask-Tutorial.git
 cd flask-ml-deployment
-
 # Create virtual environment
 python3 -m venv venv
 source venv/bin/activate  # On Windows use `venv\Scripts\activate`
